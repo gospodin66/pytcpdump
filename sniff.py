@@ -3,44 +3,13 @@ import struct
 import os
 import binascii
 import sys
-
 #################################################################################
-# Byte-order transformation functions
-# uint32_t htonl(uint32_t hostlong)  host-to-network
-# uint16_t htons(uint16_t hostshort) host-to-network
-#
-# uint32_t ntohl(uint32_t netlong)   network-to-host
-# uint16_t ntohs(uint16_t netshort)  network-to-host
+# Byte-order transformation functions:
+# uint32_t htonl(uint32_t hostlong)  >>> host-to-network
+# uint16_t htons(uint16_t hostshort) >>> host-to-network
+# uint32_t ntohl(uint32_t netlong)   >>> network-to-host
+# uint16_t ntohs(uint16_t netshort)  >>> network-to-host
 #################################################################################
-#ETHERNET FRAME
-###############
-# 0 - 6 = EthDhost (Destination MAC Address)
-# 6 - 11 = EthShost (Source MAC Address)
-# 12 - 14 = EthType (IP or another Inner protocol being used)
-#################################################################################
-#IPV4 PACKET
-############
-# Following bytes goes to the IP headers, then the TCP, and then the Application:
-# 0-3 = Version
-# 4-7 = IHL
-# 8-15 = Type of Service
-# 16-31 = Total length
-#################################################################################
-#TCP-FRAME
-##########
-##Source port (16 bits)
-#Destination port (16 bits)
-#Sequence number (32 bits)
-#Acknowledgment number (32 bits)
-#Data offset (4 bits)
-#Reserved (3 bits)
-#Flags (9 bits)
-#Window size (16 bits)
-#Checksum (16 bits)
-#Urgent pointer (16 bits)
-#Options (Variable 0–320 bits, in units of 32 bits)
-#################################################################################
-
 
 def get_mac(bytes_mac) -> str:
     bytes_str = map('{:02x}'.format, bytes_mac)
@@ -91,7 +60,11 @@ def main():
 
             output += f"Packet [{packet_cnt}] "
             indent = len(output)
-            output += f">>> Eth frame{'':<{2}}-- src MAC: {src_mac} | dst MAC: {dest_mac} | eth_proto: {eth_proto}\n{'':<{indent}}>>> {output_newline}"
+            output += f">>> Eth frame{'':<{2}}-- " \
+                      f"src MAC: {src_mac} | " \
+                      f"dst MAC: {dest_mac} | " \
+                      f"eth_proto: {eth_proto}\n" \
+                      f"{'':<{indent}}>>> {output_newline}"
 
             ipheader = packet[ETH_FRAME_SIZE:34]
             ip_header = struct.unpack('!BBHHHBBH4s4s' , ipheader)
@@ -115,11 +88,6 @@ def main():
             # ---------------------------------------------------------------
 
             ip_version_ihl = ip_header[0]
-
-            ip_version = ip_version_ihl >> 4
-            ip_ihl = ip_version_ihl & 0xF
-            ip_h_length = ip_ihl * 4
-
             ip_tos = ip_header[1]
             ip_len = ip_header[2]
             ip_id = ip_header[3]
@@ -127,6 +95,10 @@ def main():
             ip_ttl = ip_header[5]
             ip_protocol = ip_header[6]
             ip_checksum = ip_header[7]
+
+            ip_version = ip_version_ihl >> 4
+            ip_ihl = ip_version_ihl & 0xF
+            ip_h_length = ip_ihl * 4
 
             ip_id_hex = '0x{:02x}'.format(ip_id)
             ip_checksum_hex = '0x{:02x}'.format(ip_checksum)
@@ -152,7 +124,6 @@ def main():
                           f"src: {ip_s_addr} | " \
                           f"dst: {ip_d_addr}\n" \
                           f"{'':<{indent}}>>> {output_newline}" \
-
         
                 if ip_protocol == IP_PROTOCOLS["ICMP"]:
                     icmp_type, code, checksum, data = icmp_packet(ip_data)
@@ -230,9 +201,9 @@ def main():
                               f"urg pointer: {tcp_urg_pointer}\n" \
                               f"{'':<{indent}}{'':<15}--\n" \
                               f"{'':<{indent + 3}} Data {'':<6}-- hex: {hex_data[:100]} ...\n" \
-                                      f"{'':<{indent}}{'':<15}-- bin: {bin_data[:100]} ...\n" \
-                                      f"{'':<{indent}}{'':<15}-- dec: {data[:50]} ...\n" \
-                                      f"{'':<{indent}}>>> {output_newline}"
+                                       f"{'':<{indent}}{'':<15}-- bin: {bin_data[:100]} ...\n" \
+                                       f"{'':<{indent}}{'':<15}-- dec: {data[:50]} ...\n" \
+                                       f"{'':<{indent}}>>> {output_newline}"
 
                 elif ip_protocol == IP_PROTOCOLS["UDP"]:
                     udp_header = packet[ (ip_h_length + ETH_FRAME_SIZE):(ip_h_length + ETH_FRAME_SIZE) + UDP_HEADER_LENGTH ]
@@ -257,9 +228,9 @@ def main():
                               f"checksum: {str(udp_checksum)}\n" \
                               f"{'':<{indent}}{'':<15}--\n" \
                               f"{'':<{indent + 3}} Data {'':<6}-- hex: {hex_data[:100]} ...\n" \
-                                      f"{'':<{indent}}{'':<15}-- dec: {bin_data[:100]} ...\n" \
-                                      f"{'':<{indent}}{'':<15}-- dec: {data[:50]} ...\n" \
-                                      f"{'':<{indent}}>>> {output_newline}"
+                                       f"{'':<{indent}}{'':<15}-- dec: {bin_data[:100]} ...\n" \
+                                       f"{'':<{indent}}{'':<15}-- dec: {data[:50]} ...\n" \
+                                       f"{'':<{indent}}>>> {output_newline}"
  
                 else:
                     output += f"{'':<{indent}}>>> non-TCP/UDP/ICMP packet of protocol: {ip_protocol}\n"
@@ -279,7 +250,6 @@ def main():
             break
 
     exit(0)
-
 
 ################################
 
