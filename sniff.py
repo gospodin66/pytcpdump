@@ -1,3 +1,5 @@
+#!/bin/python3
+
 import socket
 import struct
 import os
@@ -10,6 +12,19 @@ import sys
 # uint32_t ntohl(uint32_t netlong)   >>> network-to-host
 # uint16_t ntohs(uint16_t netshort)  >>> network-to-host
 #################################################################################
+
+# Console colors
+W = '\033[0m'  # white (normal)
+R = '\033[31m'  # red
+G = '\033[32m'  # green
+O = '\033[33m'  # orange
+B = '\033[34m'  # blue
+P = '\033[35m'  # purple
+C = '\033[36m'  # cyan
+GR = '\033[37m'  # gray
+BOLD = '\033[1m'
+END = '\033[0m'
+
 
 def get_mac(bytes_mac) -> str:
     bytes_str = map('{:02x}'.format, bytes_mac)
@@ -45,7 +60,7 @@ def main():
 
     packet_cnt = 0
     output = ""
-    filter_ip = '192.168.3.141'
+    filter_ip = '192.168.1.45'
     output_newline = str(">" * 10)+" -- "+str("-" * 160)+"\n"
 
     s = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.ntohs(0x0003))
@@ -69,29 +84,29 @@ def main():
             ipheader = packet[ETH_FRAME_SIZE:34]
             ip_header = struct.unpack('!BBHHHBBH4s4s' , ipheader)
             # ---------------------------------------------------------------
-            # -- Version (4 bits) -- unsigned char -- extracted from 1st byte
-            # -- IHL (4 bits) -- unsigned char -- extracted from 1st byte
-            # -- Type of service (8 bits) -- unsigned short
-            # -- Total length (16 bits) -- unsigned short
-            # ---------------------------------------------------------------
-            # -- ID (16 bits) -- unsigned short
-            # -- Flags (3 bits) -- unsigned char -- extracted from 3rd byte
-            # -- Fragment offset (13 bits) -- unsigned short
-            # ---------------------------------------------------------------
-            # -- TTL (8 bits) -- unsigned short
-            # -- Protocol (8 bits) -- unsigned short
-            # -- Header checksum (16 bits) -- unsigned short
-            # ---------------------------------------------------------------
-            # -- Source addr (32 bits) -- char[]
-            # ---------------------------------------------------------------
-            # -- Destination addr (32 bits) -- char[]
-            # ---------------------------------------------------------------
+                # -- Version (4 bits) -- unsigned char -- extracted from 1st byte
+                # -- IHL (4 bits) -- unsigned char -- extracted from 1st byte
+                # -- Type of service (8 bits) -- unsigned short
+                # -- Total length (16 bits) -- unsigned short
+                # ---------------------------------------------------------------
+                # -- ID (16 bits) -- unsigned short
+                # -- Flags (3 bits) -- unsigned char -- extracted from 3rd byte
+                # -- Fragment offset (13 bits) -- unsigned short
+                # ---------------------------------------------------------------
+                # -- TTL (8 bits) -- unsigned short
+                # -- Protocol (8 bits) -- unsigned short
+                # -- Header checksum (16 bits) -- unsigned short
+                # ---------------------------------------------------------------
+                # -- Source addr (32 bits) -- char[]
+                # ---------------------------------------------------------------
+                # -- Destination addr (32 bits) -- char[]
+                # ---------------------------------------------------------------
 
             ip_version_ihl = ip_header[0]
             ip_tos = ip_header[1]
             ip_len = ip_header[2]
             ip_id = ip_header[3]
-            ip_frag_off = ip_header[4]
+            ip_flags_frag_off = ip_header[4]
             ip_ttl = ip_header[5]
             ip_protocol = ip_header[6]
             ip_checksum = ip_header[7]
@@ -99,6 +114,9 @@ def main():
             ip_version = ip_version_ihl >> 4
             ip_ihl = ip_version_ihl & 0xF
             ip_h_length = ip_ihl * 4
+
+            ip_flags = ip_flags_frag_off >> 13
+            ip_frag_off = ip_flags_frag_off & 0x1FF
 
             ip_id_hex = '0x{:02x}'.format(ip_id)
             ip_checksum_hex = '0x{:02x}'.format(ip_checksum)
@@ -115,7 +133,7 @@ def main():
                           f"tos: {ip_tos} | " \
                           f"len: {ip_len} | " \
                           f"id: {ip_id} ({ip_id_hex}) | " \
-                          f"flags: | " \
+                          f"flags: " + format(ip_flags, '#04x') + ' = ' + str(ip_flags) +" | " \
                           f"frag off: {ip_frag_off}\n" \
                           f"{'':<{indent}}{'':<15}-- " \
                           f"ttl: {ip_ttl} | " \
@@ -126,30 +144,30 @@ def main():
                           f"{'':<{indent}}>>> {output_newline}" \
         
                 if ip_protocol == IP_PROTOCOLS["ICMP"]:
-                    icmp_type, code, checksum, data = icmp_packet(ip_data)
+                    icmp_type, code, checksum, data = icmp_packet(data)
                     output += f"{'':<{indent}} >>> ICMP packet: {icmp_type} | {code} | {checksum} | {data}\n"
 
                 elif ip_protocol == IP_PROTOCOLS["TCP"]:
                     tcp_header = packet[ (ip_h_length + ETH_FRAME_SIZE):(ip_h_length + ETH_FRAME_SIZE) + 20 ]
                     tcph = struct.unpack('!HHLLBBHHH' , tcp_header)
                     # -------------------------------------------------------------------
-                    # -- Source port (16 bits) -- unsigned short
-                    # -- Destination port (16 bits) -- unsigned short
-                    # -------------------------------------------------------------------
-                    # -- Sequence number (32 bits) -- unsigned long
-                    # -------------------------------------------------------------------
-                    # -- Acknowledgment number (32 bits) -- unsigned long
-                    # -------------------------------------------------------------------
-                    # -- Data offset (4 bits) -- unsigned char -- extracted from 1st byte
-                    # -- Reserved (3 bits) -- unsigned char -- extracted from 1st byte
-                    # -- Flags (9 bits) -- unsigned short
-                    # -- Window size (16 bits) -- unsigned short
-                    # -------------------------------------------------------------------
-                    # -- Checksum (16 bits) -- unsigned short
-                    # -- Urgent pointer (16 bits) -- unsigned short
-                    # -------------------------------------------------------------------
-                    # -- Options (Variable 0–320 bits, in units of 32 bits)
-                    # -------------------------------------------------------------------
+                        # -- Source port (16 bits) -- unsigned short
+                        # -- Destination port (16 bits) -- unsigned short
+                        # -------------------------------------------------------------------
+                        # -- Sequence number (32 bits) -- unsigned long
+                        # -------------------------------------------------------------------
+                        # -- Acknowledgment number (32 bits) -- unsigned long
+                        # -------------------------------------------------------------------
+                        # -- Data offset (4 bits) -- unsigned char -- extracted from 1st byte
+                        # -- Reserved (3 bits) -- unsigned char -- extracted from 1st byte
+                        # -- Flags (9 bits) -- unsigned short
+                        # -- Window size (16 bits) -- unsigned short
+                        # -------------------------------------------------------------------
+                        # -- Checksum (16 bits) -- unsigned short
+                        # -- Urgent pointer (16 bits) -- unsigned short
+                        # -------------------------------------------------------------------
+                        # -- Options (Variable 0–320 bits, in units of 32 bits)
+                        # -------------------------------------------------------------------
 
                     tcp_src_port = tcph[0]
                     tcp_dst_port = tcph[1]
@@ -228,7 +246,7 @@ def main():
                               f"checksum: {str(udp_checksum)}\n" \
                               f"{'':<{indent}}{'':<15}--\n" \
                               f"{'':<{indent + 3}} Data {'':<6}-- hex: {hex_data[:100]} ...\n" \
-                                       f"{'':<{indent}}{'':<15}-- dec: {bin_data[:100]} ...\n" \
+                                       f"{'':<{indent}}{'':<15}-- bin: {bin_data[:100]} ...\n" \
                                        f"{'':<{indent}}{'':<15}-- dec: {data[:50]} ...\n" \
                                        f"{'':<{indent}}>>> {output_newline}"
  
@@ -240,8 +258,8 @@ def main():
                 pass
 
             # debug: only remote machine traffic
-            # if ip_s_addr and ip_d_addr and (ip_s_addr == filter_ip or ip_d_addr == filter_ip):
-            print(f"{output}\n")
+            if ip_s_addr and ip_d_addr and (ip_s_addr == filter_ip or ip_d_addr == filter_ip):
+                print(f"{output}\n")
 
             output = ""
 
