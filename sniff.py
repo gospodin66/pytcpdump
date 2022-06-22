@@ -76,8 +76,8 @@ def main():
             output += f"Packet [{packet_cnt}] "
             indent = len(output)
             output += f">>> Eth frame{'':<{2}}-- " \
-                      f"src MAC: {src_mac} | " \
-                      f"dst MAC: {dest_mac} | " \
+                      f"src MAC: {B}{src_mac}{END} | " \
+                      f"dst MAC: {B}{dest_mac}{END} | " \
                       f"eth_proto: {eth_proto}\n" \
                       f"{'':<{indent}}>>> {output_newline}"
 
@@ -133,14 +133,14 @@ def main():
                           f"tos: {ip_tos} | " \
                           f"len: {ip_len} | " \
                           f"id: {ip_id} ({ip_id_hex}) | " \
-                          f"flags: " + format(ip_flags, '#04x') + ' = ' + str(ip_flags) +" | " \
+                          f"flags: {str(ip_flags)} = {format(ip_flags, '#04x')} | " \
                           f"frag off: {ip_frag_off}\n" \
                           f"{'':<{indent}}{'':<15}-- " \
                           f"ttl: {ip_ttl} | " \
                           f"protocol: {ip_protocol} | " \
                           f"checksum: {ip_checksum} = ({ip_checksum_hex}) | " \
-                          f"src: {ip_s_addr} | " \
-                          f"dst: {ip_d_addr}\n" \
+                          f"src: {B}{ip_s_addr}{END} | " \
+                          f"dst: {B}{ip_d_addr}{END}\n" \
                           f"{'':<{indent}}>>> {output_newline}" \
         
                 if ip_protocol == IP_PROTOCOLS["ICMP"]:
@@ -201,17 +201,17 @@ def main():
                     bin_data = bin(int(hex_data, 16))[2:].encode()
 
                     output += f"{'':<{indent}}>>> TCP packet -- " \
-                              f"src port: {tcp_src_port} | " \
-                              f"dst port: {tcp_dst_port} | " \
+                              f"src port: {B}{tcp_src_port}{END} | " \
+                              f"dst port: {B}{tcp_dst_port}{END} | " \
                               f"seq: {tcp_seq} | ack: {tcp_ack}\n" \
                               f"{'':<{indent}}{'':<15}" \
                               f"-- flags: " \
-                              f"urg: {tcp_flag_urg} | " \
-                              f"ack: {tcp_flag_ack} | " \
-                              f"psh: {tcp_flag_psh} | " \
-                              f"rst: {tcp_flag_rst} | " \
-                              f"syn: {tcp_flag_syn} | " \
-                              f"fin: {tcp_flag_fin}\n" \
+                              f"urg: {O}{tcp_flag_urg}{END} | " \
+                              f"ack: {O}{tcp_flag_ack}{END} | " \
+                              f"psh: {O}{tcp_flag_psh}{END} | " \
+                              f"rst: {O}{tcp_flag_rst}{END} | " \
+                              f"syn: {O}{tcp_flag_syn}{END} | " \
+                              f"fin: {O}{tcp_flag_fin}{END}\n" \
                               f"{'':<{indent}}{'':<15}-- " \
                               f"window size: {tcp_win_size} | " \
                               f"checksum: {tcp_checksum} = ({tcp_checksumhex}) | " \
@@ -240,8 +240,8 @@ def main():
                     bin_data = bin(int(hex_data, 16))[2:].encode()
 
                     output += f"{'':<{indent}}>>> UDP packet -- " \
-                              f"src port: {str(udp_source_port)} | " \
-                              f"dst port: {str(udp_dest_port)} | " \
+                              f"src port: {B}{str(udp_source_port)}{END} | " \
+                              f"dst port: {B}{str(udp_dest_port)}{END} | " \
                               f"header len: {str(udp_length)} | " \
                               f"checksum: {str(udp_checksum)}\n" \
                               f"{'':<{indent}}{'':<15}--\n" \
