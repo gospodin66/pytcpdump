@@ -5,6 +5,7 @@ import struct
 import os
 import binascii
 import logging
+from geolocation import GeoLocation
 
 # Byte-order transformation functions:
 # uint32_t htonl(uint32_t hostlong)  >>> host-to-network
@@ -30,6 +31,9 @@ logging.basicConfig(filename='./log.log',
                     datefmt='%Y-%m-%d %H:%M:%S',
                     level=logging.DEBUG)
 
+
+geo_location = GeoLocation()
+
 class sniff:
 
     def get_mac(self, bytes_mac) -> str:
@@ -51,7 +55,6 @@ class sniff:
         return icmp_type, code, checksum, raw_data[4:]
 
 
-
     def init(self):
 
         if not os.environ.get("SUDO_UID") and os.geteuid() != 0:
@@ -67,11 +70,7 @@ class sniff:
         output = ""
 
         filter_ips = [
-            '127.0.10.10',
-            '127.0.20.20',
-            '10.110.0.1',
-            '10.120.0.1',
-            '10.140.0.140',
+            '10.0.2.15'
             # <add-adapter-ip>
         ]
         output_newline = str(">" * 10)+" -- "+str("-" * 90)+"\n"
@@ -139,6 +138,9 @@ class sniff:
 
             ip_s_addr = socket.inet_ntoa(ip_header[8])
             ip_d_addr = socket.inet_ntoa(ip_header[9])
+
+            geo_location.process_ip(ip_d_addr)
+
 
             if eth_proto == ETH_PROTCOLS["IP"]:
                 output += f"{'':<{indent}}>>> " \
