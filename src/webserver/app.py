@@ -1,12 +1,12 @@
-from flask import Flask, render_template_string, jsonify
+from flask import Flask, render_template_string, jsonify, send_from_directory
 import json
-from geolocator.geolocation import GeoLocation
+from src.geolocator.geolocation import GeoLocation
 from src.database.database import Database
 import requests
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='../../static')
 
-with open('static/index.html', 'r') as file:
+with open('../../static/index.html', 'r') as file:
     HTML_TEMPLATE = file.read()
 
 def get_host_ip():
@@ -28,9 +28,13 @@ db.close()
 def index():
     return render_template_string(HTML_TEMPLATE)
 
+@app.route('/static/<path:filename>')
+def static_files(filename):
+    return send_from_directory(app.static_folder, filename)
+
 @app.route('/update_map')
 def update_map():
-    with open('sources.json', 'r') as file:
+    with open('../sources.json', 'r') as file:
         sources = json.load(file)
     
     geo_location = GeoLocation()
