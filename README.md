@@ -12,6 +12,10 @@ This tool captures TCP/UDP packets and provides geolocation information for the 
 - Globe.gl
 - Requests library
 
+#### Dependencies
+- `checkip.amazonaws.com` API to get external host IP
+- `ipinfo.io` API to get geolocation information of destination IPs in captured packets
+
 #### Installation
 1. Clone the repository:
     ```sh

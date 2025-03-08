@@ -1,5 +1,4 @@
 requests
-globe.gl
 flask
 sqlalchemy
 scapy # used on Windows platforms
