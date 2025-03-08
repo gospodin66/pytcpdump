@@ -29,4 +29,4 @@ python pytcpdump.py
 ```
 
 #### Screenshot
-![screenshot](src/static/Capture.PNG)
+![screenshot](static/Capture.PNG)
