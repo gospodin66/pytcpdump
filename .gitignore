@@ -1,4 +1,7 @@
 log.log
+Scripts
+Lib
+share
 bin/
 include/
 lib/
@@ -6,3 +9,4 @@ lib64
 pyvenv.cfg
 __pycache__
 sources.json
+connections.sqlite
