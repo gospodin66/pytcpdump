@@ -2,7 +2,12 @@ from requests import get as req_get
 from collections import defaultdict
 import json
 import ipaddress
-from src.database.database import Database
+import platform
+
+if platform.system() == "Windows":
+    from src.database.database import Database
+else:
+    from database.database import Database
 
 class GeoLocation:
     def __init__(self):

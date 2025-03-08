@@ -1,8 +1,16 @@
 from flask import Flask, render_template_string, jsonify, send_from_directory
 import json
-from src.geolocator.geolocation import GeoLocation
-from src.database.database import Database
+
 import requests
+
+import platform
+
+if platform.system() == "Windows":
+    from src.geolocator.geolocation import GeoLocation
+    from src.database.database import Database
+else:
+    from geolocator.geolocation import GeoLocation
+    from database.database import Database
 
 app = Flask(__name__, static_folder='../../static')
 

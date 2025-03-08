@@ -8,10 +8,12 @@ import logging
 import platform
 import json
 from geolocator.geolocation import GeoLocation
-from database.database import Database
 
 if platform.system() == "Windows":
+    from src.database.database import Database
     from scapy.all import sniff as scapy_sniff, IP, ICMP, TCP, UDP
+else:
+    from database.database import Database
 
 # Byte-order transformation functions:
 # uint32_t htonl(uint32_t hostlong)  >>> host-to-network
