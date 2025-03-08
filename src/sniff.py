@@ -8,7 +8,7 @@ import logging
 import platform
 import json
 from geolocator.geolocation import GeoLocation
-from src.database.database import Database
+from database.database import Database
 
 if platform.system() == "Windows":
     from scapy.all import sniff as scapy_sniff, IP, ICMP, TCP, UDP
