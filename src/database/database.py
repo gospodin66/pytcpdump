@@ -3,10 +3,17 @@ from sqlalchemy.orm import sessionmaker, relationship, declarative_base
 from sqlite3 import connect as sqlite_connect
 from pathlib import Path
 from sqlalchemy.exc import IntegrityError
-from os import path, mkdir, chmod
+from os import chmod
 import stat
 from contextlib import contextmanager
 import json
+from platform import system
+
+if system() == "Windows":
+    from src.config import DATABASE_URL, DATABASE_FILE
+else:
+    from config import DATABASE_URL, DATABASE_FILE
+
 
 Base = declarative_base()
 
@@ -39,16 +46,14 @@ class Connection(Base):
     destination = relationship('Destination', back_populates='connections')
 
 class Database():
-    DB = 'connections.sqlite'
-    DB_PATH = path.join(path.dirname(__file__), '..', 'connections.db', DB)
-    DATABASE_URL = f'sqlite:///{DB}'
+    DB = DATABASE_FILE
+    DATABASE_URL = DATABASE_URL
     engine = create_engine(DATABASE_URL)
     SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
     def __init__(self):
         if not Path(self.DB).exists():
             self.create_database()
-            
         self.conn = sqlite_connect(self.DB)
         self.cursor = self.conn.cursor()
         self.session = self.SessionLocal()
@@ -92,15 +97,12 @@ class Database():
         self.conn.close()
 
     def init_db(self):
-        if not Path(self.DB_PATH).exists():
-            print(f"Creating database directory: {path.dirname(self.DB_PATH)}")
-            mkdir(path.dirname(self.DB_PATH))
-
-        print("Creating database and tables")
-        self.create_database()
-        self.create_table(Source)
-        self.create_table(Destination)
-        self.close()
+        if not Path(self.DB).exists():
+            print(f"Creating database file: {self.DB} and it's tables")
+            self.create_database()
+            self.create_table(Source)
+            self.create_table(Destination)
+            self.close()
 
     def insert_destinations_from_file(self, file_path, host_src_ip):
         with open(file_path, 'r') as file:
@@ -121,7 +123,3 @@ class Database():
     def insert_current_host_as_source(self, host_ip, host_city, host_country, host_lat, host_lon):
         source = Source(ip=host_ip, city=host_city, country=host_country, lat=host_lat, lon=host_lon)
         self.add_entity(source)
-
-if __name__ == "__main__":
-    db = Database()
-    db.init_db()

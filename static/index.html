@@ -15,12 +15,47 @@
             height: 100vh;
         }
     </style>
-    <script src="https://unpkg.com/three@0.124.0/build/three.min.js"></script>
-    <script src="https://unpkg.com/globe.gl"></script>
-    <script src="/static/jquery-3.6.0.min.js"></script>
+    <script>
+        function loadScript(url, callback) {
+            const script = document.createElement('script');
+            script.type = 'text/javascript';
+            script.src = url;
+            script.onload = callback;
+            script.onerror = function() {
+                console.error(`Failed to load script: ${url}`);
+            };
+            document.head.appendChild(script);
+        }
+
+        function init() {
+            console.log('All scripts loaded successfully');
+            // Initialize the map or other components here
+            if (typeof window.Globe === 'undefined') {
+                console.error("Globe library is not loaded");
+                return;
+            }
+            globe = window.Globe()
+                .globeImageUrl('//unpkg.com/three-globe/example/img/earth-night.jpg')
+                .bumpImageUrl('//unpkg.com/three-globe/example/img/earth-topology.png')
+                .backgroundImageUrl('//unpkg.com/three-globe/example/img/night-sky.png')
+                .pointOfView({ altitude: 1.2 })
+                (document.getElementById('map-container'));
+            console.log("Globe initialized:", globe);
+        }
+
+        loadScript('https://unpkg.com/three@0.124.0/build/three.min.js', function() {
+            console.log('Three.js loaded');
+            loadScript('https://unpkg.com/globe.gl', function() {
+                console.log('Globe.gl loaded');
+                loadScript('/static/jquery-3.6.0.min.js', function() {
+                    console.log('jQuery loaded');
+                    loadScript('/static/map.js', init);
+                });
+            });
+        });
+    </script>
 </head>
 <body>
     <div id="map-container"></div>
-    <script src="/static/map.js"></script>
 </body>
 </html>

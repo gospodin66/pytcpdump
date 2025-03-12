@@ -6,16 +6,18 @@ import platform
 
 if platform.system() == "Windows":
     from src.database.database import Database
+    from src.config import SOURCES_FILE, GEOLOCATION_API_URL
 else:
     from database.database import Database
+    from config import SOURCES_FILE, GEOLOCATION_API_URL
 
 class GeoLocation:
     def __init__(self):
-        self.sources_file = "sources.json"
+        self.sources_file = SOURCES_FILE
         self.ip_location_map = defaultdict(set)
         self.detected_sources = []
         self.load_detected_sources()
-        self.api_url = "https://ipinfo.io/"
+        self.api_url = GEOLOCATION_API_URL
         self.db = Database()
 
     def load_detected_sources(self):
@@ -63,7 +65,7 @@ class GeoLocation:
         try:
             response = req_get(url, timeout=2).json()
             if response and "loc" in response:
-                loc = response.get("loc", "0.0,0.0").split(',')
+                loc = response.get("loc", "0.0.0.0").split(',')
                 location = {
                     "ip": ip,
                     "city": response.get("city", "Unknown"),

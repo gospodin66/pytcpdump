@@ -7,13 +7,15 @@ import binascii
 import logging
 import platform
 import json
-from geolocator.geolocation import GeoLocation
 
 if platform.system() == "Windows":
     from src.database.database import Database
+    from src.geolocator.geolocation import GeoLocation
     from scapy.all import sniff as scapy_sniff, IP, ICMP, TCP, UDP
 else:
     from database.database import Database
+    from geolocator.geolocation import GeoLocation
+
 
 # Byte-order transformation functions:
 # uint32_t htonl(uint32_t hostlong)  >>> host-to-network
@@ -44,6 +46,24 @@ logging.basicConfig(
 geo_location = GeoLocation()
 db = Database()  # Initialize the database connection
 
+def get_interface_ips():
+    command = "ipconfig" if platform.system() == "Windows" else "ip a"
+    result = os.popen(command).read()
+    ips = []
+    
+    if platform.system() == "Windows":
+        for line in result.splitlines():
+            if "IPv4 Address" in line:
+                ip = line.split(":")[-1].strip()
+                ips.append(ip)
+    else:
+        for line in result.splitlines():
+            if "inet " in line and "scope global" in line:
+                ip = line.split()[1].split('/')[0].strip()
+                ips.append(ip)
+    
+    return ips
+
 class sniff:
 
     ETH_FRAME_SIZE = 14
@@ -56,13 +76,12 @@ class sniff:
 
     json_file = 'sources.json'
 
-    filter_ips = [
-        '10.5.0.2',
-        '192.168.56.1',
-        '192.168.5.192',
-        # <add-adapter-ip>
-    ]
+    filter_ips = get_interface_ips()
     output_newline = str(">" * 10)+" -- "+str("-" * 90)+"\n"
+
+
+    print(f"Filtering IPs: {filter_ips}")
+
 
     def get_mac(self, bytes_mac) -> str:
         bytes_str = map('{:02x}'.format, bytes_mac)
