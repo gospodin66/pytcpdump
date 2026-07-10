@@ -10,7 +10,6 @@ sudo python3 pytcpdump.py
 # --interface <net_iface>: bind capture to a specific interface name
 ```
 
-
 ### Packet format
 
 ```text
