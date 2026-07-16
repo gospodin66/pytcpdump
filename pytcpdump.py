@@ -33,21 +33,19 @@ INDENT = " " * 4
 
 # Protocols constants
 ARP = "ARP"
-
 ICMP = "ICMP"
 ICMPV6 = "ICMPV6"
-
 TCP = "TCP"
 UDP = "UDP"
-
 IPV4 = "IPV4"
 IPV6 = "IPV6"
-
 VLAN = "VLAN"
 LLDP = "LLDP"
 DOT1X = "DOT1X"
 WOL = "WOL"
 
+######################
+MAX_PACKET_LEN = 65535
 
 # Initialize regex for expresions parser
 _EXPR = re.compile(r"""
@@ -224,11 +222,12 @@ class EthernetFrame:
     ethernet2: bool
 
 
-
+class PcapError(Exception):
+    pass
 
 
 class Pytcpdump:
-    ETH_PROTOCOLS = {
+    ETH_PROTOCOLS: dict[str, int] = {
         IPV4: 0x0800,
         ARP: 0x0806,
         VLAN: 0x8100,
@@ -237,7 +236,7 @@ class Pytcpdump:
         DOT1X: 0x888E,
         WOL: 0x0842,
     }
-    IP_PROTOCOLS = {
+    IP_PROTOCOLS: dict[str, int] = {
         ICMP: 1, 
         TCP: 6, 
         UDP: 17,
@@ -314,7 +313,7 @@ class Pytcpdump:
                 self._frame_include.append(expr)
 
 
-    def run(self):
+    def run(self) -> None:
         _ensure_supported_platform()
 
         if not os.environ.get("SUDO_UID") and os.geteuid() != 0:
@@ -330,10 +329,7 @@ class Pytcpdump:
                 try:
                     s.bind((self._interface, 0))
                 except OSError as exc:
-                    print(
-                        f"Unable to bind to interface {self._interface}: {exc}",
-                        file=sys.stderr
-                    )
+                    print(f"Unable to bind to interface {self._interface}: {exc}", file=sys.stderr)
                     raise SystemExit(1)
 
             if self._pcap_file:
@@ -341,12 +337,18 @@ class Pytcpdump:
 
             # Listener loop
             while True:
-                packet, _addr = s.recvfrom(65535)
+                packet, _addr = s.recvfrom(MAX_PACKET_LEN)
                 self._process_packet(packet)
                 self._write_pcap(packet)
-        #
-        # TODO: missing except block???
-        #
+
+        except OSError as exc:
+            print(f"I/O error: {exc}", file=sys.stderr)
+            raise SystemExit(1)
+
+        except PcapError as exc:
+            print(f"PCAP error: {exc}", file=sys.stderr)
+            raise SystemExit(1)
+            
         finally:
             if self._pcap:
                 self._pcap.close()
@@ -1301,9 +1303,8 @@ class Pytcpdump:
     
 
     # ----- pcap
-    def _open_pcap(self, filename):
+    def _open_pcap(self, filename) -> None:
         self._pcap = open(filename, "wb")
-
         # Global PCAP header
         self._pcap.write(struct.pack(
             "<IHHIIII",
@@ -1317,25 +1318,15 @@ class Pytcpdump:
         ))
 
         
-    def _write_pcap(self, packet):
+    def _write_pcap(self, packet) -> None:
         if self._pcap is None:
             return
 
         now = time.time()
-
         sec = int(now)
         usec = int((now - sec) * 1_000_000)
-
         length = len(packet)
-
-        self._pcap.write(struct.pack(
-            "<IIII",
-            sec,
-            usec,
-            length,
-            length
-        ))
-
+        self._pcap.write(struct.pack("<IIII", sec, usec, length, length))
         self._pcap.write(packet)
 
 
